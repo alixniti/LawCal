@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>⚖️ โปรแกรมรวมเครื่องมือคำนวณกฎหมายและคดีความ</title>
+
+<!-- PWA & iOS Safari Meta Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="LegalSuite">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#1a237e;--primary-light:#3949ab;--primary-dark:#0d1257;
+  --gold:#c9a227;--gold-light:#f0d060;--gold-dark:#9a7c1a;
+  --accent:#b45309;--accent-light:#fef3c7;
+  --bg:#edf2f7;--card:#fff;--text:#2c3e50;--muted:#7f8c8d;
+  --success:#27ae60;--danger:#e74c3c;--warning:#f39c12;--info:#2980b9;
+  --border:#e0e6ed;--radius:12px;
+}
+body{
+  font-family:'Sarabun',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;flex-direction:column;font-size:15px;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* ---- HEADER ---- */
+.header{
+  background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 50%,var(--primary-light) 100%);
+  color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;
+  box-shadow:0 3px 12px rgba(0,0,0,.3);position:sticky;top:0;z-index:100;
+}
+.header-logo{font-size:2rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+.header-info{flex:1;}
+.header-title{font-size:1.3rem;font-weight:800;letter-spacing:.5px;}
+.header-sub{font-size:.78rem;opacity:.8;margin-top:1px;}
+.header-date{text-align:right;font-size:.8rem;opacity:.85;line-height:1.6;}
+
+/* ---- LAYOUT ---- */
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 65px);}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:240px;background:var(--primary-dark);flex-shrink:0;overflow-y:auto;padding-bottom:20px;}
+.sidebar-section{padding:16px 16px 6px;font-size:.65rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  color:rgba(255,255,255,.75);cursor:pointer;transition:all .18s;
+  border-left:3px solid transparent;font-size:.88rem;
+}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,.16);color:#fff;border-left-color:var(--gold);}
+.nav-item .icon{font-size:1.15rem;width:22px;text-align:center;flex-shrink:0;}
+.nav-divider{border:none;border-top:1px solid rgba(255,255,255,.1);margin:8px 0;}
+
+/* ---- MAIN ---- */
+.main{flex:1;padding:22px 26px;overflow-y:auto;}
+.page{display:none;animation:fadeIn .2s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---- PAGE HEADER ---- */
+.page-header{margin-bottom:20px;}
+.page-title{font-size:1.55rem;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:10px;}
+.page-title .icon{font-size:1.6rem;}
+.page-desc{color:var(--muted);font-size:.85rem;margin-top:5px;line-height:1.5;}
+
+/* ---- CARD ---- */
+.card{background:var(--card);border-radius:var(--radius);padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:18px;border:1px solid var(--border);}
+.card-title{font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:18px;display:flex;align-items:center;gap:8px;border-bottom:2px solid #eef2f7;padding-bottom:12px;}
+.card-title .icon{font-size:1.1rem;}
+
+/* ---- FORM ---- */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.form-group{margin-bottom:4px;}
+.form-group.full{grid-column:1/-1;}
+label{display:block;font-size:.82rem;font-weight:600;color:#4a5568;margin-bottom:5px;}
+label .required{color:var(--danger);margin-left:2px;}
+input[type="text"],input[type="number"],input[type="date"],select,textarea{
+  width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:.92rem;color:var(--text);transition:border-color .2s,box-shadow .2s;
+  font-family:'Sarabun',sans-serif;background:#fff;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(57,73,171,.12);}
+.input-note{font-size:.75rem;color:var(--muted);margin-top:4px;}
+.input-group{display:flex;align-items:center;}
+.input-group input{flex:1;border-top-right-radius:0;border-bottom-right-radius:0;}
+.input-addon{
+  padding:9px 12px;background:#f1f5f9;border:1.5px solid var(--border);
+  border-left:none;border-top-right-radius:8px;border-bottom-right-radius:8px;
+  color:var(--muted);font-size:.82rem;font-weight:600;white-space:nowrap;
+}
+
+/* ---- DYNAMIC ITEMS ---- */
+.dynamic-item-row{background:#fdfdfd;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:12px;position:relative;}
+.btn-remove-item{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--danger);font-size:1.1rem;cursor:pointer;opacity:0.6;}
+.btn-remove-item:hover{opacity:1;}
+.item-header-badge{display:inline-block;background:var(--primary-light);color:white;font-size:0.75rem;font-weight:700;padding:2px 8px;border-radius:12px;margin-bottom:10px;}
+
+/* ---- BUTTONS ---- */
+.btn{padding:9px 20px;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .18s;font-family:'Sarabun',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(26,35,126,.35);transform:translateY(-1px);}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#fff;}
+.btn-gold:hover{box-shadow:0 4px 14px rgba(201,162,39,.4);transform:translateY(-1px);}
+.btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary);}
+.btn-outline:hover{background:var(--primary);color:#fff;}
+.btn-secondary{background:#f1f5f9;color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:#e2e8f0;}
+.btn-clear{background:#f5f7fa;color:var(--muted);border:1px solid var(--border);}
+.btn-clear:hover{background:#e8ecf0;}
+.btn-sm{padding:6px 12px;font-size:.8rem;}
+.btn-group{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+
+/* ---- PRESET PILLS ---- */
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.preset-pill{padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);transition:all .15s;}
+.preset-pill:hover,.preset-pill.selected{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* ---- RESULT & KPI BOXES ---- */
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;}
+.result-item{text-align:center;padding:14px 10px;background:#f8fafc;border-radius:10px;border:1px solid var(--border);}
+.result-item .val{font-size:1.55rem;font-weight:800;color:var(--primary);}
+.result-item .lbl{font-size:.78rem;color:var(--muted);margin-top:3px;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px;}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.04);}
+.kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background-color:var(--primary);}
+.kpi-card.accent::before{background-color:var(--accent);}
+.kpi-card.success::before{background-color:var(--success);}
+.kpi-card.info::before{background-color:var(--info);}
+.kpi-title{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+.kpi-value{font-size:1.45rem;font-weight:800;color:var(--text);}
+.kpi-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ---- TABLE ---- */
+.table-wrap{overflow-x:auto;margin-top:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:.84rem;background:#fff;}
+thead th{background:var(--primary);color:#fff;padding:10px 12px;font-weight:700;text-align:left;white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;white-space:nowrap;}
+tr:nth-child(even) td{background:#fafbfd;}
+.tr-year-header td{background:#e8edf8!important;font-weight:700;color:var(--primary);font-size:.9rem;}
+.tr-year-total td{background:#fff8ec!important;font-weight:700;color:#925e0a;}
+.tr-grand-total td{background:linear-gradient(135deg,var(--primary-dark),var(--primary))!important;color:#fff!important;font-weight:800;}
+.text-right{text-align:right!important;}
+.text-center{text-align:center!important;}
+.monospace{font-family:'Courier New',monospace;}
+
+/* ---- INFO BOXES ---- */
+.info-box{background:#eaf4fb;border:1px solid #85c1e9;border-left:4px solid var(--info);border-radius:8px;padding:11px 15px;font-size:.83rem;color:#1a5276;margin-bottom:14px;}
+.warning-box{background:#fff8ec;border:1px solid #f9e27b;border-left:4px solid var(--warning);border-radius:8px;padding:11px 15px;font-size:.83rem;color:#7d4e00;}
+.success-box{background:#eafaf1;border:1px solid #a9dfbf;border-left:4px solid var(--success);border-radius:8px;padding:11px 15px;font-size:.83rem;color:#1e6b3e;}
+
+/* ---- DASHBOARD ---- */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:24px;}
+.dash-card{background:var(--card);border-radius:var(--radius);padding:20px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:all .2s;border:2px solid transparent;text-align:center;}
+.dash-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.1);border-color:var(--gold);}
+.dash-icon{font-size:2.2rem;margin-bottom:8px;display:block;}
+.dash-title{font-size:.95rem;font-weight:700;color:var(--primary);margin-bottom:4px;}
+.dash-desc{font-size:.76rem;color:var(--muted);line-height:1.5;}
+
+/* ---- COURT DOCUMENT SPECIFIC ---- */
+.court-doc-wrapper{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.06);padding:24px;position:relative;}
+.doc-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+.doc-header-court{text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #0f172a;}
+.doc-header-court h3{font-size:17px;font-weight:700;color:#0f172a;}
+.case-info-table{width:100%;margin-bottom:16px;font-size:13.5px;border-collapse:collapse;}
+.case-info-table td{padding:4px 6px;vertical-align:top;}
+.case-info-table .label{font-weight:600;width:15%;color:#334155;}
+.case-info-table .val{width:35%;color:#0f172a;border-bottom:1px dotted #cbd5e1;}
+.court-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.court-table th{background-color:#f1f5f9;color:#0f172a;font-weight:600;padding:8px 6px;border:1px solid #cbd5e1;text-align:center;}
+.court-table td{padding:7px 6px;border:1px solid #cbd5e1;}
+.badge-prorated{display:inline-block;padding:1px 5px;border-radius:4px;font-size:11px;font-weight:600;background-color:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+.badge-full{display:inline-block;padding:1px 5px;border-radius:4px;font-size:11px;font-weight:600;background-color:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;}
+.prayer-box{background-color:#fdfbf7;border:1px solid #fcd34d;border-left:4px solid var(--accent);border-radius:8px;padding:16px 18px;margin-top:18px;margin-bottom:18px;}
+.prayer-box h4{font-size:14.5px;font-weight:700;color:#92400e;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.prayer-content{font-size:13.5px;line-height:1.8;color:#1e293b;text-align:justify;}
+.legal-reference-box{background-color:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 18px;font-size:12.5px;color:var(--muted);line-height:1.7;}
+.signoff-section{margin-top:28px;display:flex;justify-content:flex-end;}
+.signoff-box{width:300px;text-align:center;font-size:13.5px;}
+.signoff-line{margin-top:35px;border-bottom:1px dotted #475569;margin-bottom:5px;}
+
+/* ---- TOAST NOTIFICATION ---- */
+.toast{position:fixed;bottom:24px;right:24px;background-color:#0f172a;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.25);font-size:13.5px;font-weight:500;opacity:0;transform:translateY(20px);transition:all .3s ease;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ---- RESPONSIVE FOR MOBILE / IPHONE ---- */
+@media (max-width: 900px){
+  .layout{flex-direction:column;height:auto;overflow:visible;}
+  .sidebar{width:100%;display:flex;overflow-x:auto;padding:8px 12px;gap:6px;flex-shrink:0;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,0.15);}
+  .sidebar-section,.nav-divider{display:none;}
+  .nav-item{padding:7px 12px;font-size:.82rem;border-radius:6px;border-left:none;}
+  .nav-item.active{background:rgba(255,255,255,.2);border-left:none;}
+  .main{padding:14px 12px;height:auto;overflow:visible;}
+  .form-grid,.form-grid-3{grid-template-columns:1fr;}
+}
+
+@media print{
+  .sidebar,.header,.btn-group,.btn,.presets,.btn-remove-item,.doc-toolbar,.toast,.no-print{display:none!important;}
+  .main{padding:0!important;}
+  .card,.court-doc-wrapper{box-shadow:none!important;border:none!important;padding:0!important;}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">⚖️</div>
+  <div class="header-info">
+    <div class="header-title">โปรแกรมคำนวณกฎหมายและคดีความ</div>
+    <div class="header-sub">Legal Date, Interest & Damages Suite · พัฒนาสำหรับงานกฎหมายและทนายความ</div>
+  </div>
+  <div class="header-date" id="headerDate"></div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR MENU -->
+  <aside class="sidebar">
+    <div class="sidebar-section">เมนูหลัก</div>
+    <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">🏠</span> หน้าหลัก</div>
+    <hr class="nav-divider">
+    <div class="sidebar-section">คำนวณวันและเวลา</div>
+    <div class="nav-item" onclick="navigate('deadline')"><span class="icon">📅</span> นับวันครบกำหนด</div>
+    <div class="nav-item" onclick="navigate('daycount')"><span class="icon">🗓️️</span> นับจำนวนวัน</div>
+    <div class="nav-item" onclick="navigate('age')"><span class="icon">🎂</span> คำนวณอายุ</div>
+    <hr class="nav-divider">
+    <div class="sidebar-section">คำนวณการเงินและคดี</div>
+    <div class="nav-item" onclick="navigate('notice')"><span class="icon">📝</span> ยอดหนี้ Notice</div>
+    <div class="nav-item" onclick="navigate('interest')"><span class="icon">💰</span> คำนวณดอกเบี้ย</div>
+    <div class="nav-item" onclick="navigate('lawsuit')"><span class="icon">⚖️</span> ทุนทรัพย์ฟ้องคดี</div>
+    <div class="nav-item" onclick="navigate('tort')"><span class="icon">🏚️</span> ค่าเสียหายอยู่โดยละเมิด</div>
+  </aside>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="main">
+
+    <!-- PAGE 1: DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">🏠</span>ศูนย์รวมโปรแกรมคำนวณกฎหมาย</div>
+        <div class="page-desc">เลือกโปรแกรมที่ต้องการใช้งานจากรายการด้านล่าง หรือเลือกจากเมนูด้านซ้าย</div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-card" onclick="navigate('deadline')">
+          <span class="dash-icon">📅</span>
+          <div class="dash-title">นับวันครบกำหนด</div>
+          <div class="dash-desc">คำนวณวันที่ครบกำหนดจากวันเริ่มต้น บวกจำนวนวัน/เดือน/ปี</div>
+        </div>
+        <div class="dash-card" onclick="navigate('daycount')">
+          <span class="dash-icon">🗓️</span>
+          <div class="dash-title">นับจำนวนวัน</div>
+          <div class="dash-desc">นับจำนวนวันระหว่างวันเริ่มต้นและสิ้นสุด แสดงเป็น ปี/เดือน/วัน</div>
+        </div>
+        <div class="dash-card" onclick="navigate('age')">
+          <span class="dash-icon">🎂</span>
+          <div class="dash-title">คำนวณอายุ</div>
+          <div class="dash-desc">คำนวณอายุจากวันเกิด แสดงปี เดือน วัน และวันเกิดครั้งถัดไป</div>
+        </div>
+        <div class="dash-card" onclick="navigate('notice')">
+          <span class="dash-icon">📝</span>
+          <div class="dash-title">ยอดหนี้ Notice</div>
+          <div class="dash-desc">คำนวณยอดหนี้และดอกเบี้ยผิดนัดหลายรายการ สำหรับทำหนังสือทวงถาม</div>
+        </div>
+        <div class="dash-card" onclick="navigate('interest')">
+          <span class="dash-icon">💰</span>
+          <div class="dash-title">คำนวณดอกเบี้ย</div>
+          <div class="dash-desc">คำนวณเงินต้นพร้อมดอกเบี้ยตามหลัก Actual/Actual และ ป.พ.พ.</div>
+        </div>
+        <div class="dash-card" onclick="navigate('lawsuit')">
+          <span class="dash-icon">⚖️</span>
+          <div class="dash-title">ทุนทรัพย์ฟ้องคดี</div>
+          <div class="dash-desc">คำนวณเงินต้น + ดอกเบี้ย แยกรายปี/รายเดือน ตามปีปฏิทินไทย</div>
+        </div>
+        <div class="dash-card" onclick="navigate('tort')" style="border-color: rgba(180,83,9,0.3);">
+          <span class="dash-icon">🏚️</span>
+          <div class="dash-title" style="color:var(--accent);">ค่าเสียหายอยู่โดยละเมิด</div>
+          <div class="dash-desc">คำนวณค่าขาดประโยชน์รายเดือน ดอกเบี้ยผิดนัดรายงวด และร่างคำขอท้ายฟ้อง</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📋</span>อัตราดอกเบี้ยอ้างอิงตาม ป.พ.พ. (ฉบับแก้ไข พ.ศ. 2564)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>บทบัญญัติ</th>
+                <th>อัตรา</th>
+                <th>ประเภทหนี้</th>
+                <th>หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><b>ป.พ.พ. มาตรา 7</b></td><td class="text-right"><b>ร้อยละ 3 ต่อปี</b></td><td>หนี้ที่ไม่มีกำหนดอัตราดอกเบี้ยไว้</td><td>ปรับเปลี่ยนตามประกาศ กค.</td></tr>
+              <tr><td><b>ป.พ.พ. มาตรา 224</b></td><td class="text-right"><b style="color:var(--accent);">ร้อยละ 5 ต่อปี</b></td><td>ดอกเบี้ยผิดนัดในหนี้เงิน</td><td>ม.7 + ร้อยละ 2 ต่อปี</td></tr>
+              <tr><td><b>ป.พ.พ. เดิม (ก่อน 11 เม.ย. 64)</b></td><td class="text-right"><b>ร้อยละ 7.5 ต่อปี</b></td><td>อัตราดอกเบี้ยเดิม</td><td>ใช้กับหนี้ก่อนวันบังคับใช้</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: DEADLINE -->
+    <div class="page" id="page-deadline">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">📅</span>นับวันครบกำหนด</div>
+        <div class="page-desc">คำนวณวันที่ครบกำหนดจากวันเริ่มต้น บวกจำนวนวัน / เดือน / ปี</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📥</span>กรอกข้อมูล</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>วันที่เริ่มต้น <span class="required">*</span></label>
+            <input type="date" id="dl-start">
+          </div>
+          <div class="form-group">
+            <label>ประเภทการนับ</label>
+            <select id="dl-type" onchange="toggleDeadlineType()">
+              <option value="days">บวกจำนวนวัน</option>
+              <option value="months">บวกจำนวนเดือน</option>
+              <option value="years">บวกจำนวนปี</option>
+              <option value="mixed">ระบุปี/เดือน/วัน</option>
+            </select>
+          </div>
+          <div class="form-group" id="dl-simple-group">
+            <label id="dl-amount-label">จำนวนวัน <span class="required">*</span></label>
+            <input type="number" id="dl-amount" min="0" placeholder="เช่น 90">
+          </div>
+          <div id="dl-mixed-group" style="display:none;grid-column:1/-1;">
+            <div class="form-grid-3">
+              <div class="form-group"><label>ปี</label><input type="number" id="dl-y" min="0" placeholder="0"></div>
+              <div class="form-group"><label>เดือน</label><input type="number" id="dl-m" min="0" max="11" placeholder="0"></div>
+              <div class="form-group"><label>วัน</label><input type="number" id="dl-d" min="0" placeholder="0"></div>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>อายุความตัวอย่าง</label>
+            <div class="presets" id="dl-presets">
+              <div class="preset-pill" onclick="setDeadlinePreset(1,'years')">1 ปี</div>
+              <div class="preset-pill" onclick="setDeadlinePreset(2,'years')">2 ปี</div>
+              <div class="preset-pill" onclick="setDeadlinePreset(5,'years')">5 ปี</div>
+              <div class="preset-pill" onclick="setDeadlinePreset(10,'years')">10 ปี</div>
+              <div class="preset-pill" onclick="setDeadlinePreset(90,'days')">90 วัน</div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="calcDeadline()">🔍 คำนวณ</button>
+          <button class="btn btn-clear" onclick="clearDeadline()">🗑️ ล้างข้อมูล</button>
+        </div>
+      </div>
+      <div id="dl-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span>ผลการคำนวณ</div>
+          <div class="result-grid" id="dl-result-grid"></div>
+          <div id="dl-result-detail" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: DAY COUNT -->
+    <div class="page" id="page-daycount">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">🗓️</span>นับจำนวนวัน</div>
+        <div class="page-desc">นับจำนวนวันระหว่างวันสองวัน แสดงเป็นจำนวนวัน เดือน ปี และสัปดาห์</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📥</span>กรอกข้อมูล</div>
+        <div class="form-grid">
+          <div class="form-group"><label>วันที่เริ่มต้น <span class="required">*</span></label><input type="date" id="dc-start"></div>
+          <div class="form-group"><label>วันที่สิ้นสุด <span class="required">*</span></label><input type="date" id="dc-end"></div>
+          <div class="form-group"><label>วิธีนับ</label>
+            <select id="dc-method">
+              <option value="inclusive">นับวันแรกและวันสุดท้าย (inclusive)</option>
+              <option value="exclusive-last">นับวันแรก ไม่นับวันสุดท้าย</option>
+              <option value="exclusive-both">ไม่นับทั้งวันแรกและวันสุดท้าย</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="calcDayCount()">🔍 คำนวณ</button>
+          <button class="btn btn-clear" onclick="clearDayCount()">🗑️ ล้างข้อมูล</button>
+        </div>
+      </div>
+      <div id="dc-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span>ผลการคำนวณ</div>
+          <div class="result-grid" id="dc-result-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: AGE -->
+    <div class="page" id="page-age">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">🎂</span>คำนวณอายุ</div>
+        <div class="page-desc">คำนวณอายุจากวันเกิด แสดงปี เดือน วัน และวันเกิดครั้งถัดไป</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📥</span>กรอกข้อมูล</div>
+        <div class="form-grid">
+          <div class="form-group"><label>วันเดือนปีเกิด <span class="required">*</span></label><input type="date" id="age-dob"></div>
+          <div class="form-group"><label>คำนวณ ณ วันที่</label><input type="date" id="age-ref"></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="calcAge()">🔍 คำนวณ</button>
+          <button class="btn btn-gold" onclick="setAgeToday()">📌 ใช้วันนี้</button>
+          <button class="btn btn-clear" onclick="clearAge()">🗑️ ล้างข้อมูล</button>
+        </div>
+      </div>
+      <div id="age-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span>ผลการคำนวณ</div>
+          <div class="result-grid" id="age-result-grid"></div>
+          <div id="age-result-detail" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 5: NOTICE -->
+    <div class="page" id="page-notice">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">📝</span>คำนวณยอดหนี้ออก Notice (หนังสือทวงถาม)</div>
+        <div class="page-desc">เพิ่มรายการค่าเสียหายหรือยอดหนี้ได้หลายรายการ ระบบคำนวณดอกเบี้ยผิดนัดของแต่ละรายการอัตโนมัติ</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">🗓️</span>วันที่ออกหนังสือ / วันที่คำนวณ</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>วันที่ออก Notice <span class="required">*</span></label>
+            <input type="date" id="notice-calc-date">
+          </div>
+        </div>
+      </div>
+      <div class="card" style="background:transparent;box-shadow:none;border:none;padding:0;">
+        <div class="card-title"><span class="icon">📑</span>รายการหนี้ / ค่าเสียหาย</div>
+        <div id="notice-items-container"></div>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="addNoticeItem()">➕ เพิ่มรายการ</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="btn-group">
+          <button class="btn btn-gold" onclick="calcNotice()">📝 คำนวณยอดรวม</button>
+          <button class="btn btn-clear" onclick="clearNotice()">🗑️ ล้างข้อมูล</button>
+          <button class="btn btn-primary btn-sm" id="ntc-export-btn" onclick="exportNoticeExcel()" style="display:none;">📊 Export Excel</button>
+        </div>
+      </div>
+      <div id="ntc-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span>สรุปยอดหนี้หนังสือทวงถาม</div>
+          <div id="ntc-summary"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📋</span>รายละเอียดแต่ละรายการ</div>
+          <div id="ntc-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 6: INTEREST -->
+    <div class="page" id="page-interest">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">💰</span>คำนวณดอกเบี้ยหนี้เงิน</div>
+        <div class="page-desc">คำนวณเงินต้นพร้อมดอกเบี้ย ระบุอัตรา วันเริ่มนับ และวันสิ้นสุด</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📥</span>กรอกข้อมูล</div>
+        <div class="form-grid">
+          <div class="form-group"><label>เงินต้น (บาท) <span class="required">*</span></label><input type="number" id="int-principal" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="form-group"><label>อัตราดอกเบี้ย (% ต่อปี) <span class="required">*</span></label><input type="number" id="int-rate" min="0" max="100" step="0.01" placeholder="เช่น 5"></div>
+          <div class="form-group"><label>วันเริ่มนับดอกเบี้ย <span class="required">*</span></label><input type="date" id="int-start"></div>
+          <div class="form-group"><label>วันสิ้นสุด <span class="required">*</span></label><input type="date" id="int-end"></div>
+          <div class="form-group full"><label>ฐานการคำนวณ</label>
+            <select id="int-basis">
+              <option value="actual">Actual/Actual (ตามปีปฏิทินจริง 365/366 วัน)</option>
+              <option value="365">Actual/365 (365 วันทุกปี)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="calcInterest()">🔍 คำนวณ</button>
+          <button class="btn btn-clear" onclick="clearInterest()">🗑️ ล้างข้อมูล</button>
+        </div>
+      </div>
+      <div id="int-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">✅</span>ผลการคำนวณ</div>
+          <div class="result-grid" id="int-result-grid"></div>
+          <div id="int-result-detail" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 7: LAWSUIT CAPITAL -->
+    <div class="page" id="page-lawsuit">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">⚖️</span>คำนวณทุนทรัพย์ฟ้องคดี</div>
+        <div class="page-desc">คำนวณเงินต้น + ดอกเบี้ย แยกตามปีปฏิทินไทย พร้อมรายละเอียดรายเดือน ตาม ป.พ.พ.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📥</span>กรอกข้อมูลคดี</div>
+        <div class="form-grid">
+          <div class="form-group"><label>เงินต้น (บาท) <span class="required">*</span></label><input type="number" id="ls-principal" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="form-group"><label>อัตราดอกเบี้ย (% ต่อปี) <span class="required">*</span></label><input type="number" id="ls-rate" min="0" max="100" step="0.01" value="5"></div>
+          <div class="form-group"><label>วันผิดนัด (เริ่มนับดอกเบี้ย) <span class="required">*</span></label><input type="date" id="ls-default"></div>
+          <div class="form-group"><label>วันฟ้องคดี <span class="required">*</span></label><input type="date" id="ls-filing"></div>
+          <div class="form-group"><label>วิธีนับวันสุดท้าย</label>
+            <select id="ls-endmethod">
+              <option value="exclude">ไม่นับวันฟ้อง (นับถึงวันก่อนฟ้อง)</option>
+              <option value="include">นับรวมวันฟ้อง</option>
+            </select>
+          </div>
+          <div class="form-group"><label>แสดงรายละเอียด</label>
+            <select id="ls-detail">
+              <option value="monthly">แยกรายเดือน (ละเอียด)</option>
+              <option value="yearly">แยกรายปีอย่างเดียว</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-gold" onclick="calcLawsuit()">⚖️ คำนวณทุนทรัพย์</button>
+          <button class="btn btn-clear" onclick="clearLawsuit()">🗑️ ล้างข้อมูล</button>
+          <button class="btn btn-primary btn-sm" id="ls-export-btn" onclick="exportLawsuitExcel()" style="display:none;">📊 Export Excel</button>
+        </div>
+      </div>
+      <div id="ls-result" style="display:none;">
+        <div class="card">
+          <div class="card-title"><span class="icon">📊</span>สรุปทุนทรัพย์รวม</div>
+          <div id="ls-summary"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">📋</span>รายละเอียดการคำนวณ</div>
+          <div id="ls-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 8: TORT OCCUPATION DAMAGES (MERGED FROM FILE 2) -->
+    <div class="page" id="page-tort">
+      <div class="page-header">
+        <div class="page-title"><span class="icon">🏚️</span>คำนวณค่าเสียหายกรณีอยู่โดยละเมิดและดอกเบี้ยผิดนัด</div>
+        <div class="page-desc">ระบบคำนวณค่าขาดประโยชน์รายเดือน เฉลี่ยตามส่วนรายวัน และดอกเบี้ยผิดนัดรายงวดสำหรับประกอบคำฟ้องคดีแพ่ง (เอกสารหมาย จ.๕)</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <span><span class="icon">⚙️</span>กำหนดพารามิเตอร์การคำนวณ</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="loadTortSampleData()">โหลดตัวอย่างคดี</button>
+        </div>
+        
+        <!-- Court & Case Info -->
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group"><label>ศาลที่มีเขตอำนาจ</label><input type="text" id="tortCourtName" value="ศาลแพ่ง" oninput="calculateTortDamages()"></div>
+          <div class="form-group"><label>หมายเลขคดีดำ (ถ้ามี)</label><input type="text" id="tortCaseBlackNo" placeholder="เช่น พ. 1245/2566" oninput="calculateTortDamages()"></div>
+          <div class="form-group"><label>โจทก์</label><input type="text" id="tortPlaintiff" value="นายสมศักดิ์ นิติธรรม" oninput="calculateTortDamages()"></div>
+          <div class="form-group"><label>จำเลย</label><input type="text" id="tortDefendant" value="นายบุญรอด อยู่ดี" oninput="calculateTortDamages()"></div>
+          <div class="form-group full"><label>ทรัพย์สินที่ถูกละเมิด</label><input type="text" id="tortProperty" value="บ้านเลขที่ 99/99 ถนนรัชดาภิเษก แขวงจตุจักร เขตจตุจักร กรุงเทพฯ" oninput="calculateTortDamages()"></div>
+        </div>
+
+        <hr style="border:none;border-top:1px dashed var(--border);margin:16px 0;">
+
+        <!-- Period and Monthly Damages -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>วันที่เริ่มละเมิด (Start Date) <span class="required">*</span></label>
+            <input type="date" id="tortStartDate" value="2023-01-15" onchange="calculateTortDamages()">
+            <div class="input-note" id="tortStartDateThai"></div>
+          </div>
+          <div class="form-group">
+            <label>วันที่คิดคำนวณถึง / วันฟ้อง (Filing Date) <span class="required">*</span></label>
+            <input type="date" id="tortEndDate" value="2023-10-15" onchange="calculateTortDamages()">
+            <div class="input-note" id="tortEndDateThai"></div>
+          </div>
+          <div class="form-group">
+            <label>ค่าเสียหายรายเดือนปกติ (บาท/เดือน) <span class="required">*</span></label>
+            <div class="input-group">
+              <input type="number" id="tortMonthlyRate" value="15000" min="0" step="100" oninput="calculateTortDamages()">
+              <span class="input-addon">บาท/เดือน</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>การคิดตามส่วนรายวัน (เศษของเดือน)</label>
+            <select id="tortProrateMethod" onchange="handleTortProrateChange()">
+              <option value="actual" selected>ตามจำนวนวันจริงในเดือนนั้น (วันจริง / 28-31 วัน) [แนะนำ]</option>
+              <option value="base30">ตามฐานมาตรฐาน 30 วันต่อเดือน</option>
+              <option value="customDaily">กำหนดอัตราค่าเสียหายรายวันเอง</option>
+            </select>
+          </div>
+          <div class="form-group full" id="tortCustomDailyGroup" style="display:none;">
+            <label>อัตราค่าเสียหายรายวัน (บาท/วัน)</label>
+            <input type="number" id="tortCustomDailyRate" value="500" min="0" oninput="calculateTortDamages()">
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px dashed var(--border);margin:16px 0;">
+
+        <!-- Interest Settings -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>อัตราดอกเบี้ยผิดนัด (ป.พ.พ. ม.224)</label>
+            <select id="tortInterestPreset" onchange="handleTortInterestPresetChange()">
+              <option value="5" selected>ร้อยละ 5.0 ต่อปี (กฎหมายใหม่ ตั้งแต่ 11 เม.ย. 2564)</option>
+              <option value="split">แยกตามกฎหมายจริง (ก่อน 11 เม.ย. 64 = 7.5%, ตั้งแต่ 11 เม.ย. 64 = 5.0%)</option>
+              <option value="7.5">ร้อยละ 7.5 ต่อปี (กฎหมายเดิม)</option>
+              <option value="custom">กำหนดอัตราเอง...</option>
+            </select>
+          </div>
+          <div class="form-group" id="tortCustomInterestGroup" style="display:none;">
+            <label>ระบุอัตราดอกเบี้ย (% ต่อปี)</label>
+            <input type="number" id="tortCustomInterestRate" value="5.0" step="0.1" oninput="calculateTortDamages()">
+          </div>
+          <div class="form-group">
+            <label>วันเริ่มคิดดอกเบี้ยผิดนัดในแต่ละงวด</label>
+            <select id="tortInterestStartRule" onchange="calculateTortDamages()">
+              <option value="nextDay" selected>นับแต่วันถัดจากวันสิ้นสุดแต่ละงวด (ฎีกา 2221/2536) [แนะนำ]</option>
+              <option value="endDay">นับแต่วันสิ้นสุดของแต่ละงวด</option>
+              <option value="startDay">นับแต่วันเริ่มต้นของแต่ละงวด</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ฐานจำนวนวันใน 1 ปี สำหรับคิดดอกเบี้ย</label>
+            <select id="tortYearDaysBase" onchange="calculateTortDamages()">
+              <option value="365" selected>365 วัน (มาตรฐานศาลทั่วไป)</option>
+              <option value="actual">ตามปฏิทินจริง (365 หรือ 366 วัน)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary" onclick="calculateTortDamages()">🔄 คำนวณใหม่</button>
+          <button type="button" class="btn btn-secondary" onclick="resetTortForm()">ล้างข้อมูล</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card info">
+          <div class="kpi-title">รวมระยะเวลาที่ละเมิด</div>
+          <div class="kpi-value" id="tortKpiDuration">-</div>
+          <div class="kpi-sub" id="tortKpiTotalDays">- วัน</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">รวมค่าเสียหายเงินต้น</div>
+          <div class="kpi-value" id="tortKpiPrincipal">-</div>
+          <div class="kpi-sub" id="tortKpiPeriodCount">- งวด</div>
+        </div>
+        <div class="kpi-card accent">
+          <div class="kpi-title">รวมดอกเบี้ยผิดนัดถึงวันฟ้อง</div>
+          <div class="kpi-value" id="tortKpiInterest" style="color:var(--accent);">-</div>
+          <div class="kpi-sub" id="tortKpiInterestRateDesc">-</div>
+        </div>
+        <div class="kpi-card success">
+          <div class="kpi-title">ยอดรวมเรียกร้องทั้งสิ้น</div>
+          <div class="kpi-value" id="tortKpiGrandTotal" style="color:var(--success);">-</div>
+          <div class="kpi-sub">เงินต้น + ดอกเบี้ยผิดนัด</div>
+        </div>
+      </div>
+
+      <!-- Court Document Sheet (จ.๕) -->
+      <div class="court-doc-wrapper" id="tortCourtDocument">
+        <div class="doc-toolbar no-print">
+          <div style="font-weight:700;color:var(--primary);">📋 บัญชีคำนวณค่าเสียหายและดอกเบี้ยผิดนัดท้ายคำฟ้อง (เอกสารหมาย จ.๕)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="copyTortTableForWord(false)">📋 คัดลอกตารางลง Word</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="copyTortTableForWord(true)">📄 คัดลอกทั้งเอกสาร (Word)</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="copyTortPrayerText()">คัดลอกคำขอท้ายฟ้อง</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="exportTortToCSV()">Export Excel (CSV)</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ พิมพ์ / PDF ศาล</button>
+          </div>
+        </div>
+
+        <div class="doc-header-court">
+          <div style="font-size:13px;font-weight:600;color:#64748b;margin-bottom:3px;">เอกสารแนบท้ายคำฟ้อง (เอกสารหมาย จ.๕)</div>
+          <h3>ตารางคำนวณค่าเสียหายจากการอยู่โดยละเมิดและดอกเบี้ยผิดนัด</h3>
+          <div style="font-size:14px;font-weight:600;color:#334155;" id="tortCourtTitleDisplay">ในศาลแพ่ง</div>
+        </div>
+
+        <table class="case-info-table">
+          <tr>
+            <td class="label">คดีหมายเลขดำที่:</td><td class="val" id="tortDispCaseNo">-</td>
+            <td class="label">วันที่ยื่นฟ้อง:</td><td class="val" id="tortDispFilingDate">-</td>
+          </tr>
+          <tr>
+            <td class="label">โจทก์:</td><td class="val" id="tortDispPlaintiff">-</td>
+            <td class="label">จำเลย:</td><td class="val" id="tortDispDefendant">-</td>
+          </tr>
+          <tr>
+            <td class="label">ทรัพย์สินพิพาท:</td><td class="val" colspan="3" id="tortDispProperty">-</td>
+          </tr>
+          <tr>
+            <td class="label">ช่วงเวลาละเมิด:</td><td class="val" colspan="3" id="tortDispPeriodSpan">-</td>
+          </tr>
+        </table>
+
+        <div class="table-wrap">
+          <table class="court-table" id="tortCalculationTable">
+            <thead>
+              <tr>
+                <th style="width:45px;">งวดที่</th>
+                <th>ช่วงระยะเวลาละเมิด</th>
+                <th style="width:80px;">จำนวนวัน</th>
+                <th style="width:110px;">ค่าเสียหายเงินต้น</th>
+                <th style="width:100px;">วันเริ่มคิด ดบ.</th>
+                <th style="width:95px;">คิดถึงวันที่</th>
+                <th style="width:65px;">จำนวนวัน</th>
+                <th style="width:75px;">อัตรา ดบ.</th>
+                <th style="width:105px;">ดอกเบี้ยผิดนัด</th>
+                <th style="width:120px;">รวมเงินต้นและ ดบ.</th>
+              </tr>
+            </thead>
+            <tbody id="tortTableBody"></tbody>
+            <tfoot id="tortTableFoot"></tfoot>
+          </table>
+        </div>
+
+        <!-- Prayer Box -->
+        <div class="prayer-box">
+          <h4>
+            <span>📜 ตัวอย่างคำขอบังคับท้ายฟ้อง (สำหรับนำไปปรับใช้ในคำฟ้อง)</span>
+            <button type="button" class="btn btn-outline btn-sm no-print" onclick="copyTortPrayerText()">คัดลอกข้อความ</button>
+          </h4>
+          <div class="prayer-content" id="tortLegalPrayerText"></div>
+        </div>
+
+        <!-- Sign-off Block -->
+        <div class="signoff-section">
+          <div class="signoff-box">
+            <div>ขอรับรองว่าตารางคำนวณนี้ถูกต้องตรงตามความเป็นจริง</div>
+            <div class="signoff-line"></div>
+            <div>( ............................................................ )</div>
+            <div style="margin-top:4px;color:#475569;">โจทก์ / ทนายความโจทก์</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">ผู้จัดทำบัญชีคำนวณ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST COMPONENT -->
+<div id="toast" class="toast">คัดลอกข้อมูลสำเร็จ</div>
+
+<script>
+/* ==========================================================
+   GLOBAL UTILITIES & SHARED HELPERS
+   ========================================================== */
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const DAYS_TH = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+function isLeap(y){return (y%4===0&&y%100!==0)||(y%400===0);}
+function daysInYear(y){return isLeap(y)?366:365;}
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function toBE(y){return y+543;}
+
+function fmtDate(d){
+  if(!d) return '-';
+  const dd=d.getDate().toString().padStart(2,'0');
+  const mm=(d.getMonth()+1).toString().padStart(2,'0');
+  return `${dd}/${mm}/${toBE(d.getFullYear())}`;
+}
+
+function fmtDateLong(d){
+  if(!d) return '-';
+  return `${d.getDate()} ${MONTHS_TH[d.getMonth()]} ${toBE(d.getFullYear())}`;
+}
+
+function fmtDateWithDay(d){
+  if(!d) return '-';
+  return `วัน${DAYS_TH[d.getDay()]}ที่ ${fmtDateLong(d)}`;
+}
+
+function fmtMoney(n){
+  if(n===null||n===undefined||isNaN(n)) return '0.00';
+  return Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function parseDate(s){
+  if(!s) return null;
+  const d=new Date(s+'T00:00:00');
+  return isNaN(d.getTime())?null:d;
+}
+
+function diffDays(a,b){
+  return Math.round((b.getTime()-a.getTime())/86400000);
+}
+
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function addMonths(d,n){const r=new Date(d);r.setMonth(r.getMonth()+n);return r;}
+function addYears(d,n){const r=new Date(d);r.setFullYear(r.getFullYear()+n);return r;}
+
+function showError(msg){alert('⚠️ '+msg);}
+
+function showToast(msg){
+  const toast=document.getElementById('toast');
+  toast.innerText=msg;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2800);
+}
+
+/* ==========================================================
+   NAVIGATION
+   ========================================================== */
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('page-'+page);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+page+"'"))
+      n.classList.add('active');
+  });
+  window.scrollTo(0,0);
+}
+
+function updateHeaderDate(){
+  const now=new Date();
+  const el=document.getElementById('headerDate');
+  if(el) el.innerHTML=`<b>${fmtDateLong(now)}</b><br>วัน${DAYS_TH[now.getDay()]}`;
+}
+
+/* ==========================================================
+   PAGE: DEADLINE
+   ========================================================== */
+function toggleDeadlineType(){
+  const t=document.getElementById('dl-type').value;
+  const sg=document.getElementById('dl-simple-group');
+  const mg=document.getElementById('dl-mixed-group');
+  const lbl=document.getElementById('dl-amount-label');
+  if(t==='mixed'){sg.style.display='none';mg.style.display='block';}
+  else{sg.style.display='block';mg.style.display='none';}
+  if(t==='days') lbl.innerHTML='จำนวนวัน <span class="required">*</span>';
+  else if(t==='months') lbl.innerHTML='จำนวนเดือน <span class="required">*</span>';
+  else if(t==='years') lbl.innerHTML='จำนวนปี <span class="required">*</span>';
+}
+
+function setDeadlinePreset(val,unit){
+  const sel=document.getElementById('dl-type');
+  document.querySelectorAll('#dl-presets .preset-pill').forEach(p=>p.classList.remove('selected'));
+  if(event&&event.target) event.target.classList.add('selected');
+  if(unit==='days'){sel.value='days';document.getElementById('dl-amount').value=val;}
+  else if(unit==='months'){sel.value='months';document.getElementById('dl-amount').value=val;}
+  else if(unit==='years'){sel.value='years';document.getElementById('dl-amount').value=val;}
+  toggleDeadlineType();
+}
+
+function calcDeadline(){
+  const start=parseDate(document.getElementById('dl-start').value);
+  if(!start){showError('กรุณากรอกวันที่เริ่มต้น');return;}
+  const type=document.getElementById('dl-type').value;
+  let result;
+  if(type==='mixed'){
+    const y=parseInt(document.getElementById('dl-y').value)||0;
+    const m=parseInt(document.getElementById('dl-m').value)||0;
+    const d=parseInt(document.getElementById('dl-d').value)||0;
+    if(y===0&&m===0&&d===0){showError('กรุณากรอกจำนวนปี/เดือน/วัน อย่างน้อย 1 ค่า');return;}
+    result=new Date(start);
+    result.setFullYear(result.getFullYear()+y);
+    result.setMonth(result.getMonth()+m);
+    result.setDate(result.getDate()+d);
+  } else {
+    const amt=parseInt(document.getElementById('dl-amount').value);
+    if(isNaN(amt)||amt<0){showError('กรุณากรอกจำนวนที่ถูกต้อง');return;}
+    if(type==='days') result=addDays(start,amt);
+    else if(type==='months') result=addMonths(start,amt);
+    else result=addYears(start,amt);
+  }
+  const totalDays=diffDays(start,result);
+  document.getElementById('dl-result-grid').innerHTML=`
+    <div class="result-item"><div class="val" style="font-size:1.2rem;">${fmtDate(result)}</div><div class="lbl">วันที่ครบกำหนด</div></div>
+    <div class="result-item"><div class="val">${DAYS_TH[result.getDay()]}</div><div class="lbl">วันในสัปดาห์</div></div>
+    <div class="result-item"><div class="val">${totalDays.toLocaleString()}</div><div class="lbl">รวมจำนวนวัน</div></div>
+  `;
+  document.getElementById('dl-result-detail').innerHTML=`
+    <div class="success-box">
+      ✅ <b>วันที่ครบกำหนด:</b> ${fmtDateWithDay(result)}<br>
+      📅 <b>วันที่เริ่มต้น:</b> ${fmtDateWithDay(start)} (รวม ${totalDays.toLocaleString()} วัน)
+    </div>
+  `;
+  document.getElementById('dl-result').style.display='block';
+}
+
+function clearDeadline(){
+  ['dl-start','dl-amount','dl-y','dl-m','dl-d'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.value='';
+  });
+  document.getElementById('dl-result').style.display='none';
+}
+
+/* ==========================================================
+   PAGE: DAY COUNT & AGE
+   ========================================================== */
+function calcDayCount(){
+  const start=parseDate(document.getElementById('dc-start').value);
+  const end=parseDate(document.getElementById('dc-end').value);
+  if(!start||!end){showError('กรุณากรอกวันที่ให้ครบทั้ง 2 ช่อง');return;}
+  if(end<start){showError('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');return;}
+  const method=document.getElementById('dc-method').value;
+  let days=diffDays(start,end);
+  if(method==='inclusive') days+=1;
+  else if(method==='exclusive-both') days-=1;
+
+  document.getElementById('dc-result-grid').innerHTML=`
+    <div class="result-item"><div class="val">${days.toLocaleString()}</div><div class="lbl">จำนวนวันทั้งหมด</div></div>
+    <div class="result-item"><div class="val">${Math.floor(days/7)}</div><div class="lbl">สัปดาห์</div></div>
+  `;
+  document.getElementById('dc-result').style.display='block';
+}
+
+function clearDayCount(){
+  ['dc-start','dc-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('dc-result').style.display='none';
+}
+
+function setAgeToday(){
+  document.getElementById('age-ref').value=new Date().toISOString().split('T')[0];
+}
+
+function calcAge(){
+  const dob=parseDate(document.getElementById('age-dob').value);
+  if(!dob){showError('กรุณากรอกวันเกิด');return;}
+  let ref=parseDate(document.getElementById('age-ref').value)||new Date();
+  if(dob>ref){showError('วันเกิดต้องไม่อยู่ในอนาคต');return;}
+
+  let y=ref.getFullYear()-dob.getFullYear();
+  let m=ref.getMonth()-dob.getMonth();
+  let d=ref.getDate()-dob.getDate();
+  if(d<0){m--;d+=daysInMonth(ref.getFullYear(),ref.getMonth()-1);}
+  if(m<0){y--;m+=12;}
+
+  const totalDays=diffDays(dob,ref);
+  document.getElementById('age-result-grid').innerHTML=`
+    <div class="result-item"><div class="val">${y}</div><div class="lbl">ปี</div></div>
+    <div class="result-item"><div class="val">${m}</div><div class="lbl">เดือน</div></div>
+    <div class="result-item"><div class="val">${d}</div><div class="lbl">วัน</div></div>
+    <div class="result-item"><div class="val">${totalDays.toLocaleString()}</div><div class="lbl">วันรวม</div></div>
+  `;
+  document.getElementById('age-result').style.display='block';
+}
+
+function clearAge(){
+  ['age-dob','age-ref'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('age-result').style.display='none';
+}
+
+/* ==========================================================
+   PAGE: NOTICE CALCULATOR
+   ========================================================== */
+let noticeItemCount = 0;
+let _noticeData = null;
+
+function addNoticeItem(){
+  noticeItemCount++;
+  const container=document.getElementById('notice-items-container');
+  const div=document.createElement('div');
+  div.className='dynamic-item-row';
+  div.id='notice-item-'+noticeItemCount;
+  div.innerHTML=`
+    <div class="item-header-badge">รายการที่ ${noticeItemCount}</div>
+    <button class="btn-remove-item" onclick="removeNoticeItem(${noticeItemCount})">✖</button>
+    <div class="form-grid">
+      <div class="form-group full"><label>ชื่อรายการ <span class="required">*</span></label><input type="text" id="ntc-name-${noticeItemCount}" placeholder="เช่น ค่าเช่าบ้านค้างชำระ" required></div>
+      <div class="form-group"><label>เงินต้น (บาท) <span class="required">*</span></label><input type="number" id="ntc-amount-${noticeItemCount}" min="0" step="0.01" placeholder="0.00" required></div>
+      <div class="form-group"><label>อัตราดอกเบี้ย (%/ปี)</label><input type="number" id="ntc-rate-${noticeItemCount}" min="0" step="0.01" value="5"></div>
+      <div class="form-group full"><label>วันที่เริ่มผิดนัด <span class="required">*</span></label><input type="date" id="ntc-date-${noticeItemCount}" required></div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function removeNoticeItem(id){
+  const el=document.getElementById('notice-item-'+id);if(el) el.remove();
+}
+
+function clearNotice(){
+  document.getElementById('notice-calc-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('notice-items-container').innerHTML='';
+  document.getElementById('ntc-result').style.display='none';
+  document.getElementById('ntc-export-btn').style.display='none';
+  _noticeData=null;noticeItemCount=0;addNoticeItem();
+}
+
+function calcNotice(){
+  const calcDate=parseDate(document.getElementById('notice-calc-date').value);
+  if(!calcDate){showError('กรุณาระบุวันที่ออก Notice');return;}
+  const rows=document.querySelectorAll('#notice-items-container .dynamic-item-row');
+  if(rows.length===0){showError('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ');return;}
+
+  let totalPrincipal=0,totalInterest=0,resultItems=[];
+  for(let i=0;i<rows.length;i++){
+    const idNum=rows[i].id.split('-')[2];
+    const name=document.getElementById(`ntc-name-${idNum}`).value.trim();
+    const amount=parseFloat(document.getElementById(`ntc-amount-${idNum}`).value);
+    const rate=parseFloat(document.getElementById(`ntc-rate-${idNum}`).value)||0;
+    const defDate=parseDate(document.getElementById(`ntc-date-${idNum}`).value);
+
+    if(!name||isNaN(amount)||amount<=0||!defDate){showError(`กรุณากรอกข้อมูลรายการที่ ${i+1} ให้ครบถ้วน`);return;}
+
+    let interestAmt=0,daysDiff=0;
+    if(defDate<calcDate){
+      daysDiff=diffDays(defDate,calcDate);
+      let cur=new Date(defDate);
+      while(cur<calcDate){
+        const yr=cur.getFullYear();
+        const nextYr=new Date(yr+1,0,1);
+        const segEnd=nextYr<calcDate?nextYr:calcDate;
+        const d=diffDays(cur,segEnd);
+        interestAmt+=amount*(rate/100)*(d/daysInYear(yr));
+        cur=new Date(nextYr);
+      }
+    }
+    totalPrincipal+=amount;totalInterest+=interestAmt;
+    resultItems.push({name,principal:amount,rate,defDate,days:daysDiff,interest:interestAmt,total:amount+interestAmt});
+  }
+
+  const grandTotal=totalPrincipal+totalInterest;
+  document.getElementById('ntc-summary').innerHTML=`
+    <div class="result-grid">
+      <div class="result-item"><div class="val">${fmtMoney(totalPrincipal)}</div><div class="lbl">รวมเงินต้น (บาท)</div></div>
+      <div class="result-item"><div class="val" style="color:var(--warning);">${fmtMoney(totalInterest)}</div><div class="lbl">รวมดอกเบี้ย (บาท)</div></div>
+      <div class="result-item"><div class="val" style="color:var(--danger);">${fmtMoney(grandTotal)}</div><div class="lbl">ยอดรวมทั้งสิ้น (บาท)</div></div>
+    </div>
+  `;
+
+  let tableHTML=`<div class="table-wrap"><table><thead><tr>
+    <th>ลำดับ</th><th>รายการ</th><th class="text-right">เงินต้น (บาท)</th><th class="text-center">เริ่มผิดนัด</th><th class="text-center">วัน</th><th class="text-right">ดอกเบี้ย (บาท)</th><th class="text-right">รวมเป็นเงิน</th>
+  </tr></thead><tbody>`;
+  resultItems.forEach((item,idx)=>{
+    tableHTML+=`<tr>
+      <td class="text-center">${idx+1}</td><td><b>${item.name}</b> (${item.rate}%)</td>
+      <td class="text-right monospace">${fmtMoney(item.principal)}</td><td class="text-center">${fmtDate(item.defDate)}</td><td class="text-center">${item.days}</td>
+      <td class="text-right monospace">${fmtMoney(item.interest)}</td><td class="text-right monospace" style="font-weight:700;">${fmtMoney(item.total)}</td>
+    </tr>`;
+  });
+  tableHTML+=`<tr class="tr-grand-total"><td colspan="2" class="text-center">รวมทั้งสิ้น</td><td class="text-right">${fmtMoney(totalPrincipal)}</td><td></td><td></td><td class="text-right">${fmtMoney(totalInterest)}</td><td class="text-right">${fmtMoney(grandTotal)}</td></tr></tbody></table></div>`;
+  document.getElementById('ntc-table').innerHTML=tableHTML;
+  document.getElementById('ntc-result').style.display='block';
+  document.getElementById('ntc-export-btn').style.display='inline-flex';
+  _noticeData={calcDate,items:resultItems,totalPrincipal,totalInterest,grandTotal};
+}
+
+function exportNoticeExcel(){
+  if(!_noticeData) return;
+  const wb=XLSX.utils.book_new();
+  const rows=[['บัญชียอดหนี้หนังสือทวงถาม'],['คำนวณถึงวันที่',fmtDate(_noticeData.calcDate)],[''],['ลำดับ','รายการ','เงินต้น','เริ่มผิดนัด','จำนวนวัน','ดอกเบี้ย','รวม']];
+  _noticeData.items.forEach((it,i)=>rows.push([i+1,it.name,it.principal,fmtDate(it.defDate),it.days,it.interest,it.total]));
+  rows.push(['','รวมทั้งสิ้น',_noticeData.totalPrincipal,'','',_noticeData.totalInterest,_noticeData.grandTotal]);
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,'Notice');
+  XLSX.writeFile(wb,'ยอดหนี้_Notice.xlsx');
+}
+
+/* ==========================================================
+   PAGE: INTEREST & LAWSUIT CAPITAL
+   ========================================================== */
+function calcInterest(){
+  const p=parseFloat(document.getElementById('int-principal').value);
+  const r=parseFloat(document.getElementById('int-rate').value);
+  const start=parseDate(document.getElementById('int-start').value);
+  const end=parseDate(document.getElementById('int-end').value);
+  if(isNaN(p)||isNaN(r)||!start||!end||end<=start){showError('กรุณากรอกข้อมูลดอกเบี้ยให้ถูกต้อง');return;}
+  const days=diffDays(start,end);
+  const interest=p*(r/100)*(days/365);
+  document.getElementById('int-result-grid').innerHTML=`
+    <div class="result-item"><div class="val">${fmtMoney(p)}</div><div class="lbl">เงินต้น</div></div>
+    <div class="result-item"><div class="val" style="color:var(--warning);">${fmtMoney(interest)}</div><div class="lbl">ดอกเบี้ย</div></div>
+    <div class="result-item"><div class="val" style="color:var(--danger);">${fmtMoney(p+interest)}</div><div class="lbl">รวมทั้งสิ้น</div></div>
+  `;
+  document.getElementById('int-result').style.display='block';
+}
+
+function clearInterest(){
+  ['int-principal','int-rate','int-start','int-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('int-result').style.display='none';
+}
+
+let _lawsuitData=null;
+function calcLawsuit(){
+  const p=parseFloat(document.getElementById('ls-principal').value);
+  const r=parseFloat(document.getElementById('ls-rate').value);
+  const defDate=parseDate(document.getElementById('ls-default').value);
+  const filDate=parseDate(document.getElementById('ls-filing').value);
+  const endMethod=document.getElementById('ls-endmethod').value;
+  if(isNaN(p)||isNaN(r)||!defDate||!filDate||filDate<=defDate){showError('กรุณากรอกข้อมูลคดีให้ครบถ้วน');return;}
+
+  const interestEnd=(endMethod==='include')?addDays(filDate,1):filDate;
+  const totalDays=diffDays(defDate,interestEnd);
+  let cur=new Date(defDate),totalInterest=0;
+  const yearData=[];
+  const endDate=addDays(interestEnd,-1);
+
+  while(cur<=endDate){
+    const yr=cur.getFullYear();
+    const diy=daysInYear(yr);
+    const yearLastDay=new Date(yr,11,31);
+    const segEnd=yearLastDay<endDate?yearLastDay:endDate;
+    const d=diffDays(cur,segEnd)+1;
+    const intAmt=p*(r/100)*(d/diy);
+    totalInterest+=intAmt;
+    yearData.push({year:yr,days:d,diy,interest:intAmt});
+    cur=new Date(yr+1,0,1);
+  }
+
+  const grandTotal=p+totalInterest;
+  document.getElementById('ls-summary').innerHTML=`
+    <div class="result-grid">
+      <div class="result-item"><div class="val">${fmtMoney(p)}</div><div class="lbl">เงินต้น (บาท)</div></div>
+      <div class="result-item"><div class="val" style="color:var(--warning);">${fmtMoney(totalInterest)}</div><div class="lbl">ดอกเบี้ยรวม (บาท)</div></div>
+      <div class="result-item"><div class="val" style="color:var(--danger);">${fmtMoney(grandTotal)}</div><div class="lbl">ทุนทรัพย์รวม (บาท)</div></div>
+      <div class="result-item"><div class="val">${totalDays.toLocaleString()}</div><div class="lbl">จำนวนวัน</div></div>
+    </div>
+  `;
+
+  let tHTML=`<div class="table-wrap"><table><thead><tr><th>ปี (พ.ศ.)</th><th class="text-center">จำนวนวัน</th><th class="text-center">วัน/ปี</th><th class="text-right">อัตรา</th><th class="text-right">ดอกเบี้ย (บาท)</th></tr></thead><tbody>`;
+  yearData.forEach(y=>{
+    tHTML+=`<tr><td>ปี ${toBE(y.year)}</td><td class="text-center">${y.days}</td><td class="text-center">${y.diy}</td><td class="text-right">${r}%</td><td class="text-right monospace">${fmtMoney(y.interest)}</td></tr>`;
+  });
+  tHTML+=`<tr class="tr-grand-total"><td colspan="4">รวมดอกเบี้ยทั้งหมด</td><td class="text-right">${fmtMoney(totalInterest)}</td></tr></tbody></table></div>`;
+  document.getElementById('ls-table').innerHTML=tHTML;
+  document.getElementById('ls-result').style.display='block';
+  document.getElementById('ls-export-btn').style.display='inline-flex';
+  _lawsuitData={p,r,defDate,filDate,totalDays,totalInterest,grandTotal,yearData};
+}
+
+function clearLawsuit(){
+  ['ls-principal','ls-rate','ls-default','ls-filing'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ls-result').style.display='none';
+  document.getElementById('ls-export-btn').style.display='none';
+}
+
+function exportLawsuitExcel(){
+  if(!_lawsuitData) return;
+  const wb=XLSX.utils.book_new();
+  const rows=[['คำนวณทุนทรัพย์ฟ้องคดี'],['เงินต้น',_lawsuitData.p],['ดอกเบี้ยรวม',_lawsuitData.totalInterest],['ทุนทรัพย์รวม',_lawsuitData.grandTotal]];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,'ทุนทรัพย์');
+  XLSX.writeFile(wb,'ทุนทรัพย์ฟ้องคดี.xlsx');
+}
+
+/* ==========================================================
+   PAGE: TORT OCCUPATION DAMAGES (MERGED COMPLETE MODULE)
+   ========================================================== */
+let currentTortData = null;
+
+function handleTortInterestPresetChange(){
+  const preset=document.getElementById('tortInterestPreset').value;
+  document.getElementById('tortCustomInterestGroup').style.display=(preset==='custom')?'block':'none';
+  calculateTortDamages();
+}
+
+function handleTortProrateChange(){
+  const val=document.getElementById('tortProrateMethod').value;
+  document.getElementById('tortCustomDailyGroup').style.display=(val==='customDaily')?'block':'none';
+  calculateTortDamages();
+}
+
+function calculateTortDamages(){
+  const startDateStr=document.getElementById('tortStartDate').value;
+  const endDateStr=document.getElementById('tortEndDate').value;
+  const monthlyRate=parseFloat(document.getElementById('tortMonthlyRate').value)||0;
+  const prorateMethod=document.getElementById('tortProrateMethod').value;
+  const customDailyRate=parseFloat(document.getElementById('tortCustomDailyRate').value)||0;
+  const interestPreset=document.getElementById('tortInterestPreset').value;
+  const customInterestRate=parseFloat(document.getElementById('tortCustomInterestRate').value)||0;
+  const interestStartRule=document.getElementById('tortInterestStartRule').value;
+  const yearDaysBase=document.getElementById('tortYearDaysBase').value;
+
+  document.getElementById('tortStartDateThai').innerText="พ.ศ. : "+fmtDateLong(parseDate(startDateStr));
+  document.getElementById('tortEndDateThai').innerText="พ.ศ. : "+fmtDateLong(parseDate(endDateStr));
+  document.getElementById('tortCourtTitleDisplay').innerText="ใน"+(document.getElementById('tortCourtName').value||"ศาลแพ่ง");
+  document.getElementById('tortDispCaseNo').innerText=document.getElementById('tortCaseBlackNo').value||"(ยังมิได้ระบุ)";
+  document.getElementById('tortDispFilingDate').innerText=fmtDateLong(parseDate(endDateStr));
+  document.getElementById('tortDispPlaintiff').innerText=document.getElementById('tortPlaintiff').value||"-";
+  document.getElementById('tortDispDefendant').innerText=document.getElementById('tortDefendant').value||"-";
+  document.getElementById('tortDispProperty').innerText=document.getElementById('tortProperty').value||"-";
+
+  if(!startDateStr||!endDateStr) return;
+  const startDate=parseDate(startDateStr);
+  const endDate=parseDate(endDateStr);
+  if(startDate>endDate){alert("วันเริ่มต้นการละเมิดต้องไม่เกินวันสิ้นสุด (วันฟ้อง)");return;}
+
+  const periods=[];
+  let curr=new Date(startDate);
+
+  while(curr<=endDate){
+    const year=curr.getFullYear();
+    const month=curr.getMonth();
+    const lastDay=daysInMonth(year,month);
+    const monthEndDate=new Date(year,month,lastDay);
+    const periodStart=new Date(curr);
+    const periodEnd=(monthEndDate<endDate)?monthEndDate:new Date(endDate);
+    const occupiedDays=diffDays(periodStart,periodEnd)+1;
+    const isFullMonth=(periodStart.getDate()===1&&periodEnd.getDate()===lastDay);
+
+    let periodPrincipal=0;
+    if(isFullMonth){
+      periodPrincipal=monthlyRate;
+    } else {
+      if(prorateMethod==='actual') periodPrincipal=monthlyRate*(occupiedDays/lastDay);
+      else if(prorateMethod==='base30') periodPrincipal=monthlyRate*(occupiedDays/30);
+      else if(prorateMethod==='customDaily') periodPrincipal=customDailyRate*occupiedDays;
+    }
+
+    let intStartDate;
+    if(interestStartRule==='nextDay') intStartDate=addDays(periodEnd,1);
+    else if(interestStartRule==='endDay') intStartDate=new Date(periodEnd);
+    else intStartDate=new Date(periodStart);
+
+    let intDays=0,periodInterest=0,rateText="";
+    if(intStartDate<=endDate){
+      intDays=diffDays(intStartDate,endDate)+1;
+      if(intDays>0){
+        if(interestPreset==='split'){
+          const splitDate=new Date(2021,3,11);
+          if(endDate<splitDate){
+            periodInterest=periodPrincipal*(7.5/100)*(intDays/365);rateText="7.5%";
+          } else if(intStartDate>=splitDate){
+            periodInterest=periodPrincipal*(5.0/100)*(intDays/365);rateText="5.0%";
+          } else {
+            const daysPre=diffDays(intStartDate,new Date(2021,3,10))+1;
+            const daysPost=diffDays(splitDate,endDate)+1;
+            periodInterest=periodPrincipal*(7.5/100)*(daysPre/365)+periodPrincipal*(5.0/100)*(daysPost/365);
+            rateText="7.5% / 5.0%";
+          }
+        } else {
+          let rate=5.0;
+          if(interestPreset==='7.5') rate=7.5;
+          else if(interestPreset==='custom') rate=customInterestRate;
+          const baseD=(yearDaysBase==='actual'&&isLeap(intStartDate.getFullYear()))?366:365;
+          periodInterest=periodPrincipal*(rate/100)*(intDays/baseD);
+          rateText=`${rate}%`;
+        }
+      }
+    }
+
+    periods.push({
+      periodNum:periods.length+1,start:periodStart,end:periodEnd,
+      days:occupiedDays,daysInMonth:lastDay,isFullMonth,
+      principal:periodPrincipal,intStartDate,intDays,rateText,
+      interest:periodInterest,total:periodPrincipal+periodInterest
+    });
+
+    if(periodEnd.getDate()===lastDay) curr=new Date(year,month+1,1);
+    else curr=addDays(periodEnd,1);
+  }
+
+  let totalPrincipal=0,totalInterest=0,totalGrand=0,totalDays=0;
+  periods.forEach(p=>{
+    totalPrincipal+=p.principal;totalInterest+=p.interest;
+    totalGrand+=p.total;totalDays+=p.days;
+  });
+
+  const durationText=formatTortDuration(startDate,endDate);
+  document.getElementById('tortKpiDuration').innerText=durationText;
+  document.getElementById('tortKpiTotalDays').innerText=`รวม ${totalDays} วัน`;
+  document.getElementById('tortKpiPrincipal').innerText=fmtMoney(totalPrincipal)+" ฿";
+  document.getElementById('tortKpiPeriodCount').innerText=`แบ่งเป็น ${periods.length} งวด`;
+  document.getElementById('tortKpiInterest').innerText=fmtMoney(totalInterest)+" ฿";
+  document.getElementById('tortKpiInterestRateDesc').innerText=(interestPreset==='split')?"7.5% และ 5.0% ต่อปี":(interestPreset==='custom'?`${customInterestRate}% ต่อปี`:`${interestPreset}% ต่อปี`);
+  document.getElementById('tortKpiGrandTotal').innerText=fmtMoney(totalGrand)+" ฿";
+  document.getElementById('tortDispPeriodSpan').innerText=`${fmtDateLong(startDate)} ถึง ${fmtDateLong(endDate)} (รวม ${durationText} / ${totalDays} วัน)`;
+
+  const tbody=document.getElementById('tortTableBody');
+  tbody.innerHTML='';
+  periods.forEach(p=>{
+    const tr=document.createElement('tr');
+    const badge=p.isFullMonth?'<span class="badge-full">เต็มเดือน</span>':`<span class="badge-prorated">${p.days}/${p.daysInMonth} วัน</span>`;
+    tr.innerHTML=`
+      <td class="text-center">${p.periodNum}</td>
+      <td>${fmtDate(p.start)} - ${fmtDate(p.end)}</td>
+      <td class="text-center">${p.days} วัน ${badge}</td>
+      <td class="text-right monospace">${fmtMoney(p.principal)}</td>
+      <td class="text-center">${p.intDays>0?fmtDate(p.intStartDate):'-'}</td>
+      <td class="text-center">${fmtDate(endDate)}</td>
+      <td class="text-center">${p.intDays}</td>
+      <td class="text-center">${p.rateText}</td>
+      <td class="text-right monospace" style="color:var(--accent);">${fmtMoney(p.interest)}</td>
+      <td class="text-right monospace" style="font-weight:700;">${fmtMoney(p.total)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('tortTableFoot').innerHTML=`
+    <tr class="tr-grand-total">
+      <td colspan="3" class="text-center">รวมทั้งสิ้น (${periods.length} งวด)</td>
+      <td class="text-right">${fmtMoney(totalPrincipal)}</td>
+      <td colspan="4" class="text-center">รวมดอกเบี้ยผิดนัดถึงวันฟ้อง</td>
+      <td class="text-right">${fmtMoney(totalInterest)}</td>
+      <td class="text-right" style="color:var(--gold-light);">${fmtMoney(totalGrand)}</td>
+    </tr>
+  `;
+
+  updateTortLegalPrayer(startDate,endDate,monthlyRate,totalPrincipal,totalInterest,totalGrand,interestPreset,customInterestRate);
+
+  currentTortData={startDate,endDate,monthlyRate,totalPrincipal,totalInterest,totalGrand,totalDays,durationText,periods};
+}
+
+function formatTortDuration(d1,d2){
+  let y=d2.getFullYear()-d1.getFullYear();
+  let m=d2.getMonth()-d1.getMonth();
+  let d=d2.getDate()-d1.getDate()+1;
+  if(d<0){m--;d+=daysInMonth(d2.getFullYear(),d2.getMonth()-1);}
+  if(m<0){y--;m+=12;}
+  const parts=[];
+  if(y>0) parts.push(`${y} ปี`);
+  if(m>0) parts.push(`${m} เดือน`);
+  if(d>0) parts.push(`${d} วัน`);
+  return parts.length>0?parts.join(' '):'1 วัน';
+}
+
+function updateTortLegalPrayer(startDate,endDate,monthlyRate,totalPrincipal,totalInterest,totalGrand,interestPreset,customInterestRate){
+  const propDesc=document.getElementById('tortProperty').value||"ทรัพย์สินพิพาท";
+  let rateDesc="ร้อยละ 5 ต่อปี";
+  if(interestPreset==='7.5') rateDesc="ร้อยละ 7.5 ต่อปี";
+  else if(interestPreset==='split') rateDesc="ร้อยละ 7.5 ต่อปี ก่อนวันที่ 11 เมษายน 2564 และร้อยละ 5 ต่อปี นับแต่วันที่ 11 เมษายน 2564 เป็นต้นไป";
+  else if(interestPreset==='custom') rateDesc=`ร้อยละ ${customInterestRate} ต่อปี`;
+
+  document.getElementById('tortLegalPrayerText').innerHTML=`
+    <p>๑. ให้จำเลยและบริวารขนย้ายทรัพย์สินและรื้อถอนสิ่งปลูกสร้าง (ถ้ามี) พร้อมส่งมอบ <strong>${propDesc}</strong> คืนให้แก่โจทก์ในสภาพเรียบร้อย</p>
+    <p style="margin-top:8px;">๒. ให้จำเลยชดใช้ค่าเสียหายจากการอยู่โดยละเมิดอันเป็นค่าขาดประโยชน์แก่โจทก์ ตั้งแต่วันที่ <strong>${fmtDateLong(startDate)}</strong> ถึงวันฟ้อง (วันที่ <strong>${fmtDateLong(endDate)}</strong>) เป็นเงินต้นค่าเสียหายจำนวน <strong>${fmtMoney(totalPrincipal)} บาท</strong> พร้อมดอกเบี้ยผิดนัดในอัตรา <strong>${rateDesc}</strong> ของเงินต้นค่าเสียหายในแต่ละเดือนนับแต่วันผิดนัดของแต่ละงวดเป็นต้นไปจนถึงวันฟ้อง คิดเป็นเงินดอกเบี้ยจำนวน <strong>${fmtMoney(totalInterest)} บาท</strong> รวมเป็นเงินทั้งสิ้น <strong>${fmtMoney(totalGrand)} บาท (${bahtText(totalGrand)})</strong></p>
+    <p style="margin-top:8px;">๓. ให้จำเลยชดใช้ค่าเสียหายอันเป็นค่าขาดประโยชน์แก่โจทก์ในอัตราเดือนละ <strong>${fmtMoney(monthlyRate)} บาท</strong> นับถัดจากวันฟ้องเป็นต้นไป จนกว่าจำเลยและบริวารจะส่งมอบทรัพย์สินพิพาทคืนให้แก่โจทก์ในสภาพเรียบร้อย พร้อมดอกเบี้ยผิดนัดในอัตราร้อยละ ๕ ต่อปี ของค่าเสียหายในแต่ละเดือนนับแต่วันที่ผิดนัดในแต่ละงวดเป็นต้นไปจนกว่าจะชำระเสร็จสิ้น</p>
+    <p style="margin-top:8px;">๔. ให้จำเลยใช้ค่าฤชาธรรมเนียมและค่าทนายความแทนโจทก์</p>
+  `;
+}
+
+function bahtText(num){
+  if(!num||isNaN(num)) return "ศูนย์บาทถ้วน";
+  num=Math.round(num*100)/100;
+  const sNum=num.toFixed(2);
+  const [bahtStr,satangStr]=sNum.split('.');
+  const thaiNums=["ศูนย์","หนึ่ง","สอง","สาม","สี่","ห้า","หก","เจ็ด","แปด","เก้า"];
+  const thaiUnits=["","สิบ","ร้อย","พัน","หมื่น","แสน","ล้าน"];
+
+  function convertBlock(str){
+    let res="",len=str.length;
+    for(let i=0;i<len;i++){
+      const digit=parseInt(str.charAt(i),10);
+      const unit=thaiUnits[len-1-i];
+      if(digit!==0){
+        if(len-1-i===1&&digit===1) res+="สิบ";
+        else if(len-1-i===1&&digit===2) res+="ยี่สิบ";
+        else if(len-1-i===0&&digit===1&&len>1&&parseInt(str.charAt(i-1),10)!==0) res+="เอ็ด";
+        else res+=thaiNums[digit]+unit;
+      }
+    }
+    return res;
+  }
+  let result="";
+  let nBaht=parseInt(bahtStr,10);
+  if(nBaht===0) result="ศูนย์บาท";
+  else {
+    if(bahtStr.length>6){
+      result=convertBlock(bahtStr.substring(0,bahtStr.length-6))+"ล้าน"+convertBlock(bahtStr.substring(bahtStr.length-6))+"บาท";
+    } else result=convertBlock(bahtStr)+"บาท";
+  }
+  const nSatang=parseInt(satangStr,10);
+  if(nSatang===0) result+="ถ้วน";
+  else result+=convertBlock(satangStr)+"สตางค์";
+  return result;
+}
+
+function copyTortPrayerText(){
+  const text=document.getElementById('tortLegalPrayerText').innerText;
+  navigator.clipboard.writeText(text).then(()=>showToast("คัดลอกคำขอบังคับท้ายฟ้องสำเร็จ"));
+}
+
+function exportTortToCSV(){
+  if(!currentTortData||!currentTortData.periods) return;
+  let csv="\uFEFF";
+  csv+=`ตารางคำนวณค่าเสียหายกรณีอยู่โดยละเมิดและดอกเบี้ยผิดนัด (เอกสารหมาย จ.๕)\n`;
+  csv+=`ศาล:,"${document.getElementById('tortCourtName').value}",โจทก์:,"${document.getElementById('tortPlaintiff').value}",จำเลย:,"${document.getElementById('tortDefendant').value}"\n\n`;
+  csv+=`"งวดที่","ช่วงระยะเวลา","จำนวนวัน","เงินต้น (บาท)","วันเริ่มคิดดอกเบี้ย","คิดถึงวันที่","จำนวนวัน","อัตราดอกเบี้ย","ดอกเบี้ย (บาท)","รวม (บาท)"\n`;
+  currentTortData.periods.forEach(p=>{
+    csv+=`"${p.periodNum}","${fmtDate(p.start)} - ${fmtDate(p.end)}","${p.days}","${p.principal.toFixed(2)}","${fmtDate(p.intStartDate)}","${fmtDate(currentTortData.endDate)}","${p.intDays}","${p.rateText}","${p.interest.toFixed(2)}","${p.total.toFixed(2)}"\n`;
+  });
+  csv+=`"รวมทั้งสิ้น","${currentTortData.periods.length} งวด","${currentTortData.totalDays} วัน","${currentTortData.totalPrincipal.toFixed(2)}","-","-","-","-","${currentTortData.totalInterest.toFixed(2)}","${currentTortData.totalGrand.toFixed(2)}"\n`;
+
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='บัญชีคำนวณค่าเสียหายละเมิด_จ5.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showToast("ส่งออกไฟล์ Excel (CSV) สำเร็จ");
+}
+
+async function copyTortTableForWord(includeHeader){
+  if(!currentTortData) return;
+  const court=document.getElementById('tortCourtName').value||"ศาลแพ่ง";
+  const caseNo=document.getElementById('tortCaseBlackNo').value||"-";
+  const plt=document.getElementById('tortPlaintiff').value||"-";
+  const def=document.getElementById('tortDefendant').value||"-";
+
+  let html=`<div style="font-family:'TH Sarabun New',Sarabun,sans-serif;font-size:14pt;color:#000;">`;
+  if(includeHeader){
+    html+=`
+      <div style="text-align:center;font-weight:bold;font-size:14pt;">เอกสารแนบท้ายคำฟ้อง (เอกสารหมาย จ.๕)</div>
+      <div style="text-align:center;font-weight:bold;font-size:16pt;margin-bottom:4px;">ตารางคำนวณค่าเสียหายจากการอยู่โดยละเมิดและดอกเบี้ยผิดนัด</div>
+      <div style="text-align:center;font-weight:bold;font-size:14pt;margin-bottom:12px;">ใน${court}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13pt;">
+        <tr><td style="width:15%;font-weight:bold;">หมายเลขคดีดำ:</td><td style="width:35%;border-bottom:1px dotted #888;">${caseNo}</td><td style="width:15%;font-weight:bold;">วันฟ้อง:</td><td style="width:35%;border-bottom:1px dotted #888;">${fmtDateLong(currentTortData.endDate)}</td></tr>
+        <tr><td style="font-weight:bold;">โจทก์:</td><td style="border-bottom:1px dotted #888;">${plt}</td><td style="font-weight:bold;">จำเลย:</td><td style="border-bottom:1px dotted #888;">${def}</td></tr>
+      </table>
+    `;
+  }
+
+  html+=`<table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;border:1px solid #000;font-size:12.5pt;">
+    <thead><tr style="background:#f2f2f2;font-weight:bold;">
+      <th>งวดที่</th><th>ช่วงเวลา</th><th>จำนวนวัน</th><th>เงินต้น (บาท)</th><th>เริ่มคิด ดบ.</th><th>ถึงวันที่</th><th>วัน</th><th>อัตรา</th><th>ดอกเบี้ย (บาท)</th><th>รวมประจำงวด (บาท)</th>
+    </tr></thead><tbody>`;
+
+  currentTortData.periods.forEach(p=>{
+    html+=`<tr>
+      <td style="text-align:center;">${p.periodNum}</td><td>${fmtDate(p.start)} - ${fmtDate(p.end)}</td><td style="text-align:center;">${p.days}</td>
+      <td style="text-align:right;">${fmtMoney(p.principal)}</td><td style="text-align:center;">${p.intDays>0?fmtDate(p.intStartDate):'-'}</td>
+      <td style="text-align:center;">${fmtDate(currentTortData.endDate)}</td><td style="text-align:center;">${p.intDays}</td><td style="text-align:center;">${p.rateText}</td>
+      <td style="text-align:right;">${fmtMoney(p.interest)}</td><td style="text-align:right;font-weight:bold;">${fmtMoney(p.total)}</td>
+    </tr>`;
+  });
+
+  html+=`</tbody><tfoot><tr style="background:#f2f2f2;font-weight:bold;">
+    <td colspan="3" style="text-align:center;">รวมทั้งสิ้น</td><td style="text-align:right;">${fmtMoney(currentTortData.totalPrincipal)}</td>
+    <td colspan="4" style="text-align:center;">รวมดอกเบี้ยผิดนัด</td><td style="text-align:right;">${fmtMoney(currentTortData.totalInterest)}</td>
+    <td style="text-align:right;">${fmtMoney(currentTortData.totalGrand)}</td>
+  </tr></tfoot></table>`;
+
+  if(includeHeader){
+    html+=`
+      <table style="width:100%;margin-top:25px;border:none;font-size:13pt;">
+        <tr><td style="width:50%;"></td><td style="width:50%;text-align:center;">
+          <div>ขอรับรองว่าตารางคำนวณนี้ถูกต้องตรงตามความเป็นจริง</div>
+          <div style="margin-top:40px;border-bottom:1px dotted #000;width:80%;margin-left:auto;margin-right:auto;"></div>
+          <div style="margin-top:5px;">( ............................................................ )</div>
+          <div style="font-size:12pt;color:#555;">โจทก์ / ทนายความโจทก์</div>
+        </td></tr>
+      </table>
+    `;
+  }
+  html+=`</div>`;
+
+  try {
+    const htmlBlob=new Blob([html],{type:'text/html'});
+    const textBlob=new Blob([html],{type:'text/plain'});
+    const item=new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob});
+    await navigator.clipboard.write([item]);
+    showToast(includeHeader?"คัดลอกทั้งเอกสารสำหรับวางใน Word สำเร็จ":"คัดลอกตารางสำหรับวางใน Word สำเร็จ");
+  } catch(e){
+    alert("ไม่สามารถคัดลอกลง Clipboard ได้โดยตรง กรุณาใช้ปุ่มพิมพ์/PDF แทน");
+  }
+}
+
+function loadTortSampleData(){
+  document.getElementById('tortCourtName').value="ศาลแพ่ง";
+  document.getElementById('tortCaseBlackNo').value="พ. 452/2566";
+  document.getElementById('tortPlaintiff').value="นายวิชัย สุวรรณสิทธิ์ (โจทก์)";
+  document.getElementById('tortDefendant').value="นายสมชาย ทรงฤทธิ์ (จำเลย)";
+  document.getElementById('tortProperty').value="ตึกแถว 3 ชั้น เลขที่ 123/45 ถนนพหลโยธิน แขวงลาดยาว เขตจตุจักร กรุงเทพฯ";
+  document.getElementById('tortStartDate').value="2023-03-15";
+  document.getElementById('tortEndDate').value="2024-02-28";
+  document.getElementById('tortMonthlyRate').value="20000";
+  document.getElementById('tortProrateMethod').value="actual";
+  document.getElementById('tortInterestPreset').value="5";
+  handleTortInterestPresetChange();
+  showToast("โหลดข้อมูลตัวอย่างเรียบร้อย");
+}
+
+function resetTortForm(){
+  if(confirm("ต้องการล้างข้อมูลฟอร์มละเมิดทั้งหมดหรือไม่?")){
+    document.getElementById('tortCaseBlackNo').value="";
+    document.getElementById('tortStartDate').value="2023-01-01";
+    document.getElementById('tortEndDate').value="2023-12-31";
+    document.getElementById('tortMonthlyRate').value="10000";
+    calculateTortDamages();
+  }
+}
+
+/* ==========================================================
+   APP INITIALIZATION
+   ========================================================== */
+window.addEventListener('DOMContentLoaded',()=>{
+  updateHeaderDate();
+  setInterval(updateHeaderDate,60000);
+
+  const todayStr=new Date().toISOString().split('T')[0];
+  document.getElementById('age-ref').value=todayStr;
+  document.getElementById('dc-end').value=todayStr;
+  document.getElementById('ls-filing').value=todayStr;
+  document.getElementById('int-end').value=todayStr;
+  document.getElementById('notice-calc-date').value=todayStr;
+
+  addNoticeItem();
+  calculateTortDamages();
+});
+</script>
+</body>
+</html>
